@@ -1,0 +1,10 @@
+credentials:
+  usernames:
+    afonsolelis:
+      name: Afonso Lelis
+      password: "123456789"
+
+cookie:
+  name: streamlit_auth
+  key: some_random_key
+  expiry_days: 30

@@ -22,7 +22,11 @@ sqlalchemy = "^2.0.29"
 mkdocs-dracula-theme = "^1.0.7"
 mkdocs-material = "^9.5.17"
 mkdocstrings = {extras = ["python"], version = "^0.24.3"}
+streamlit-authenticator = "^0.3.2"
 
+[tool.taskipy.tasks]
+format = "black . && isort ."
+check = "pydocstyle && pip-audit"
 
 [build-system]
 requires = ["poetry-core"]
