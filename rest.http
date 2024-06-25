@@ -1,0 +1,36 @@
+# Criar um novo usuário
+POST http://localhost:3000/api/usuarios
+Content-Type: application/json
+
+{
+    "nome": "João da Silva",
+    "email": "joao2@example.com",
+    "idade": 30
+}
+
+###
+
+# Listar todos os usuários
+GET http://localhost:3000/api/usuarios
+
+###
+
+# Obter um usuário pelo ID (substitua <ID> pelo ID real do usuário)
+GET http://localhost:3000/api/usuarios/6678985b44df25a751584953
+
+###
+
+# Atualizar um usuário pelo ID (substitua <ID> pelo ID real do usuário)
+PUT http://localhost:3000/api/usuarios/6678985b44df25a751584953
+Content-Type: application/json
+
+{
+    "nome": "João da Silva Atualizado",
+    "email": "joao.atualizado@example.com",
+    "idade": 31
+}
+
+###
+
+# Deletar um usuário pelo ID (substitua <ID> pelo ID real do usuário)
+DELETE http://localhost:3000/api/usuarios/6678985b44df25a751584953
