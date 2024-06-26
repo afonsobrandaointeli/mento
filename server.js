@@ -5,7 +5,7 @@ const express = require('express');
 const winston = require('winston');
 const mongoose = require('mongoose');
 const admin = require('firebase-admin');
-const credentials = require('./serviceAccountKey.json');
+const credentials = require('dotenv').config().parsed;
 
 const app = express();
 const port = process.env.PORT || 3000;
