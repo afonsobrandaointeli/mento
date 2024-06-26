@@ -3,13 +3,21 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "prepare": "husky install",
     "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-push": "validação de push"
+    }
+  },
   "dependencies": {
+    "commitlint": "^19.3.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
@@ -19,6 +27,9 @@
     "winston-mongodb": "^5.1.1"
   },
   "devDependencies": {
+    "eslint": "^9.5.0",
+    "globals": "^15.6.0",
+    "husky": "^9.0.11",
     "jest": "^29.7.0",
     "nodemon": "^3.1.4"
   }
