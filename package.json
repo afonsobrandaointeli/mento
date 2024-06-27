@@ -1,9 +1,9 @@
 {
   "name": "mento",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "server": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +20,7 @@
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
+    "firebase-admin": "^12.2.0",
     "mongodb": "^6.7.0",
     "mongoose": "^8.4.3",
     "winston": "^3.13.0",
