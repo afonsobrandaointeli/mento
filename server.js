@@ -6,7 +6,8 @@ const winston = require('winston');
 const mongoose = require('mongoose');
 const admin = require('firebase-admin');
 const credentials = require('dotenv').config().parsed;
-
+const User = require('./models/User');
+const bcrypt = require('bcryptjs');
 const app = express();
 const port = process.env.PORT || 3000;
 const mongoDbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dev';
@@ -71,15 +72,49 @@ app.listen(port, () => {
 
 //rota de signup
 app.post('/signup', async (req, res) => {
-  const user = {
-    email: req.body.email,
-    password: req.body.password
+  const { email, password } = req.body;
+  try {
+    //Hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Criar usuário no Firebase
+    const userRecord = await admin.auth().createUser({
+      email,
+      password: hashedPassword,
+      emailVerified: false,
+      disabled: false
+    });
+
+    // Criar usuário no MongoDB
+    const newUser = new User({
+      email,
+      password: hashedPassword, 
+      emailVerified: false
+    });
+    await newUser.save();
+
+    res.status(201).json({ firebaseId: userRecord.uid, localId: newUser._id });
+  } catch (error) {
+    logger.error('Erro ao criar usuário:', error.message);
+    res.status(500).json({ error: error.message });
   }
-  const userResponse = await admin.auth().createUser({
-    email: user.email,
-    password: user.password,
-    emailVerified: false,
-    disabled: false
-  })
-  res.json(userResponse);
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Buscar usuário no MongoDB
+    const user = await User.findById({ email });
+    if (!User) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch){
+      return res.status(400).json({ error: 'Senha incorreta' });
+    }
+  } catch (error) {
+    logger.error(error.stack);
+    res.status(500).json({ error: error.message });
+  }
 });
