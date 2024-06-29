@@ -9,6 +9,9 @@ const credentials = require('dotenv').config().parsed;
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 const app = express();
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const csrf = require('csurf');
 const port = process.env.PORT || 3000;
 const mongoDbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dev';
 
@@ -36,6 +39,17 @@ const logger = winston.createLogger({
 // Middlewares
 app.use(express.json()); // Para analisar o corpo das requisições como JSON
 app.use(express.urlencoded({extended: true})); // Para analisar o corpo das requisições como URL-encoded
+app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production' // Cookies seguros apenas em produção
+  }
+}));
+
+app.use(csrf());
 
 // Inicializar o Firebase Admin
 admin.initializeApp({
@@ -81,7 +95,7 @@ app.post('/signup', async (req, res) => {
     // Criar usuário no Firebase
     const userRecord = await admin.auth().createUser({
       email,
-      password: hashedPassword,
+      password,
       emailVerified: false,
       disabled: false
     });
@@ -105,9 +119,9 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     // Buscar usuário no MongoDB
-    const user = await User.findById({ email });
-    if (!User) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
+    const user = await User.findOne({ email }); // Buscar usuário por email
+    if (!user) { 
+        return res.status(404).json({ error: 'Usuário não encontrado' });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch){
