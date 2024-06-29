@@ -4,11 +4,11 @@ const UserDto = require('../dtos/userDto');
 // Criar um novo usuário
 exports.createUser = async (req, res) => {
   try {
-    const userDto = new UserDto(req.body.nome, req.body.email, req.body.idade);
+    const userDto = new UserDto(req.body.nome, req.body.email, req.body.idade, req.body.senha);
     console.log(userDto);
 
     // Validação básica dos dados (você pode usar uma biblioteca como Joi ou Yup para validações mais complexas)
-    if (!userDto.nome || !userDto.email) {
+    if (!userDto.nome || !userDto.email || !userDto.senha) {
       return res.status(400).json({ error: 'Nome e email são obrigatórios' });
     }
 
@@ -47,10 +47,10 @@ exports.getUserById = async (req, res) => {
 // Atualizar um usuário pelo ID
 exports.updateUserById = async (req, res) => {
   try {
-    const userDto = new UserDto(req.body.nome, req.body.email, req.body.idade);
+    const userDto = new UserDto(req.body.nome, req.body.email, req.body.idade, req.body.senha);
 
     // Validação básica dos dados (você pode usar uma biblioteca como Joi ou Yup para validações mais complexas)
-    if (!userDto.nome || !userDto.email) {
+    if (!userDto.nome || !userDto.email || userDto.senha) {
       return res.status(400).json({ error: 'Nome e email são obrigatórios' });
     }
 
