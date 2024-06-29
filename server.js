@@ -1,17 +1,17 @@
 require('dotenv').config();
 require('winston-mongodb');
-
 const express = require('express');
 const winston = require('winston');
 const mongoose = require('mongoose');
 const admin = require('firebase-admin');
+const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+
 const credentials = require('dotenv').config().parsed;
 const User = require('./models/User');
-const bcrypt = require('bcryptjs');
 const app = express();
-const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const csrf = require('csurf');
 const port = process.env.PORT || 3000;
 const mongoDbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dev';
 
@@ -45,11 +45,16 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production' // Cookies seguros apenas em produção
+    secure: process.env.NODE_ENV === 'production', // Cookies seguros apenas em produção
+    httpOnly: true,
   }
 }));
-
 app.use(csrf());
+
+app.use((req, res, next) => {
+  res.cookie("XSRF-TOKEN", req.csrfToken());
+  next();
+});
 
 // Inicializar o Firebase Admin
 admin.initializeApp({
@@ -77,11 +82,6 @@ app.use('/', viewRoutes);
 app.use((err, req, res, next) => {
   logger.error(err.stack);
   res.status(500).json({ error: 'Algo deu errado!' });
-});
-
-// Iniciar o servidor
-app.listen(port, () => {
-  logger.info(`Servidor rodando em http://localhost:${port}`);
 });
 
 //rota de signup
@@ -132,3 +132,7 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+  // Iniciar o servidor
+app.listen(port, () => {
+  logger.info(`Servidor rodando em http://localhost:${port}`);
+  });
