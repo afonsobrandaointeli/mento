@@ -134,5 +134,5 @@ app.post('/login', async (req, res) => {
 });
   // Iniciar o servidor
 app.listen(port, () => {
-  logger.info(`Servidor rodando em http://localhost:${port}`);
+  logger.info('Servidor iniciando!')
   });
