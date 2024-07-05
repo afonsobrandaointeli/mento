@@ -1,13 +1,17 @@
 require('dotenv').config();
 require('winston-mongodb');
-
 const express = require('express');
 const winston = require('winston');
 const mongoose = require('mongoose');
 const admin = require('firebase-admin');
-const credentials = require('dotenv').config().parsed;
+const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
 
+const credentials = require('dotenv').config().parsed;
+const User = require('./models/User');
 const app = express();
+const session = require('express-session');
 const port = process.env.PORT || 3000;
 const mongoDbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dev';
 
@@ -35,6 +39,22 @@ const logger = winston.createLogger({
 // Middlewares
 app.use(express.json()); // Para analisar o corpo das requisições como JSON
 app.use(express.urlencoded({extended: true})); // Para analisar o corpo das requisições como URL-encoded
+app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Cookies seguros apenas em produção
+    httpOnly: true,
+  }
+}));
+app.use(csrf());
+
+app.use((req, res, next) => {
+  res.cookie("XSRF-TOKEN", req.csrfToken());
+  next();
+});
 
 // Inicializar o Firebase Admin
 admin.initializeApp({
@@ -64,22 +84,55 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Algo deu errado!' });
 });
 
-// Iniciar o servidor
-app.listen(port, () => {
-  logger.info(`Servidor rodando em http://localhost:${port}`);
-});
-
 //rota de signup
 app.post('/signup', async (req, res) => {
-  const user = {
-    email: req.body.email,
-    password: req.body.password
+  const { email, password } = req.body;
+  try {
+    //Hash da senha
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Criar usuário no Firebase
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      emailVerified: false,
+      disabled: false
+    });
+
+    // Criar usuário no MongoDB
+    const newUser = new User({
+      email,
+      password: hashedPassword, 
+      emailVerified: false
+    });
+    await newUser.save();
+
+    res.status(201).json({ firebaseId: userRecord.uid, localId: newUser._id });
+  } catch (error) {
+    logger.error('Erro ao criar usuário:', error.message);
+    res.status(500).json({ error: error.message });
   }
-  const userResponse = await admin.auth().createUser({
-    email: user.email,
-    password: user.password,
-    emailVerified: false,
-    disabled: false
-  })
-  res.json(userResponse);
 });
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Buscar usuário no MongoDB
+    const user = await User.findOne({ email }); // Buscar usuário por email
+    if (!user) { 
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch){
+      return res.status(400).json({ error: 'Senha incorreta' });
+    }
+  } catch (error) {
+    logger.error(error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+  // Iniciar o servidor
+app.listen(port, () => {
+  logger.info(`Servidor rodando em http://localhost:${port}`);
+  });
